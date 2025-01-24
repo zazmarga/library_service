@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from books.models import Book
@@ -21,6 +22,7 @@ class BorrowingSerializer(serializers.ModelSerializer):
 
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all())
     book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all())
 
     class Meta:
