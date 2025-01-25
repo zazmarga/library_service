@@ -7,7 +7,11 @@ from rest_framework.response import Response
 
 from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
-from borrowing.serializers import BorrowingSerializer, BorrowingCreateSerializer
+from borrowing.serializers import (
+    BorrowingSerializer,
+    BorrowingCreateSerializer,
+    BorrowingRetrieveSerializer,
+)
 from payments.models import Payment
 from payments.stripe_helper import create_stripe_payment_session
 
@@ -18,12 +22,14 @@ class BorrowingView(
     mixins.CreateModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Borrowing.objects.select_related("book", "user")
+    queryset = Borrowing.objects.select_related("book", "user").prefetch_related(
+        "payments"
+    )
     serializer_class = BorrowingSerializer
 
     def get_serializer_class(self):
-        if self.action in ["retrieve", "list"]:
-            return BorrowingSerializer
+        if self.action in ["retrieve"]:
+            return BorrowingRetrieveSerializer
         if self.action == "create":
             return BorrowingCreateSerializer
         return BorrowingSerializer

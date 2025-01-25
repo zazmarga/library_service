@@ -29,6 +29,5 @@ def create_stripe_payment_session(borrowing):
         cancel_url="https://your-domain.com/cancel",
         metadata={"borrowing_id": borrowing.id},
     )
-    print(f"{session.id=}, {session.url=}")
 
     return session.id, session.url, money_to_pay / 100
