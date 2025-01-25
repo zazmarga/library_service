@@ -81,6 +81,8 @@ class BorrowingView(
                 user=user,
             )
 
+        serializer = self.get_serializer(borrowing)
+
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED,
