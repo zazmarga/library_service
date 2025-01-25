@@ -1,9 +1,11 @@
+import asyncio
 from datetime import datetime
 
 from django.db import transaction
 from rest_framework import mixins, viewsets, serializers, status
 from rest_framework.response import Response
 
+from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
 from borrowing.serializers import BorrowingSerializer, BorrowingCreateSerializer
 
@@ -55,6 +57,17 @@ class BorrowingView(
                 book=book,
                 user=user,
             )
+
+            formatted_date = datetime.today().strftime("%d-%m-%Y  %H:%M")
+            expected_return_date = expected_return_date.strftime("%d-%m-%Y")
+            message = (
+                f"{formatted_date} NEW BORROWING \n"
+                f"BOOK: ** {borrowing.book.title} **  \n"
+                f"has been borrowed by {borrowing.user.email}\n"
+                f"expected return date: {expected_return_date}.\n"
+                f"inventory: ** {book.inventory} **\n"
+            )
+            asyncio.run(send_message(ADMIN_CHAT_ID, message))
 
         serializer = self.get_serializer(borrowing)
 
