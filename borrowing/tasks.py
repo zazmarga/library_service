@@ -21,7 +21,7 @@ def daily_checking_borrowings():
         asyncio.run(
             send_message(
                 ADMIN_CHAT_ID,
-                f"** Hello! There are {len_} overdue borrowing(s) today: **",
+                f"** Hello! Here {len_} overdue borrowing(s) today: **",
             )
         )
         date_today = datetime.today().date()
