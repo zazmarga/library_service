@@ -42,11 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "borrowing",
     "rest_framework",
     "rest_framework_simplejwt",
     "books",
     "user",
+    "borrowing",
+    "django_celery_beat",
 ]
 
 AUTH_USER_MODEL = "user.User"

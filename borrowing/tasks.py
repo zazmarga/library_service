@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from celery import shared_task
-from rest_framework.reverse import reverse
 
 from borrowing.models import Borrowing
 from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
@@ -22,7 +21,7 @@ def daily_checking_borrowings():
         asyncio.run(
             send_message(
                 ADMIN_CHAT_ID,
-                f"** Hello! There are {len_} overdue borrowing(s) for today: **",
+                f"** Hello! There are {len_} overdue borrowing(s) today: **",
             )
         )
         date_today = datetime.today().date()
