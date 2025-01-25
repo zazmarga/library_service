@@ -1,6 +1,7 @@
 from rest_framework import mixins, viewsets
 
 from payments.models import Payment
+from payments.permissions import IsAdminOrIfAuthenticatedReadOnly
 from payments.serializers import (
     PaymentSerializer,
     PaymentRetrieveSerializer,
@@ -14,6 +15,7 @@ class PaymentView(
 ):
     queryset = Payment.objects.select_related("borrowing")
     serializer_class = PaymentSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "retrieve":
