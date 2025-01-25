@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
 from borrowing.serializers import BorrowingSerializer, BorrowingCreateSerializer
+from payments.models import Payment
+from payments.stripe_helper import create_stripe_payment_session
 
 
 class BorrowingView(
@@ -58,6 +60,10 @@ class BorrowingView(
                 user=user,
             )
 
+            session_id, session_url, money_to_pay = create_stripe_payment_session(
+                borrowing
+            )
+
             formatted_date = datetime.today().strftime("%d-%m-%Y  %H:%M")
             expected_return_date = expected_return_date.strftime("%d-%m-%Y")
             message = (
@@ -69,6 +75,16 @@ class BorrowingView(
                 f"now in stock: ** {book.inventory} **\n"
             )
             asyncio.run(send_message(ADMIN_CHAT_ID, message))
+
+        if session_id:
+            payment = Payment.objects.create(
+                status="PENDING",
+                type_pay="PAYMENT",
+                borrowing=borrowing,
+                session_id=session_id,
+                session_url=session_url,
+                money_to_pay=money_to_pay,
+            )
 
         serializer = self.get_serializer(borrowing)
 
