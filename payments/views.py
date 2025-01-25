@@ -19,3 +19,11 @@ class PaymentView(
         if self.action == "retrieve":
             return PaymentRetrieveSerializer
         return PaymentSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        user = self.request.user
+        if user.is_staff:
+            return queryset
+        if user.is_authenticated and not user.is_staff:
+            return self.queryset.filter(borrowing__user=user)
