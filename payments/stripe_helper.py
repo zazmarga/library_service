@@ -1,4 +1,5 @@
 import stripe
+from django.urls import reverse
 
 from library_service import settings
 
@@ -6,7 +7,10 @@ from library_service import settings
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_stripe_payment_session(borrowing):
+def create_stripe_payment_session(request, borrowing):
+    success_url = request.build_absolute_uri(reverse("payment_success"))
+    cancel_url = request.build_absolute_uri(reverse("payment_cancel"))
+
     using_days = (borrowing.expected_return_date - borrowing.borrow_date).days
     money_to_pay = int(borrowing.book.daily_fee * using_days * 100)
 
@@ -25,8 +29,8 @@ def create_stripe_payment_session(borrowing):
             }
         ],
         mode="payment",
-        success_url="https://your-domain.com/success",
-        cancel_url="https://your-domain.com/cancel",
+        success_url=success_url + "?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url=cancel_url,
         metadata={"borrowing_id": borrowing.id},
     )
 
