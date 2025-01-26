@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "books",
     "user",
     "borrowing",
+    "payments",
     "django_celery_beat",
     "drf_spectacular",
 ]
