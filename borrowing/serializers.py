@@ -22,7 +22,7 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "payments",
         )
 
-    def get_payments(self, obj):
+    def get_payments(self, obj) -> list[dict]:
         from payments.serializers import PaymentInBorrowingListSerializer
         from payments.models import Payment
 
@@ -46,7 +46,7 @@ class BorrowingRetrieveSerializer(serializers.ModelSerializer):
             "payments",
         )
 
-    def get_payments(self, obj):
+    def get_payments(self, obj) -> list[dict]:
         from payments.serializers import PaymentInBorrowingRetrieveSerializer
         from payments.models import Payment
 
@@ -90,14 +90,4 @@ class BorrowingInPaymentRetrieveSerializer(serializers.ModelSerializer):
             "actual_return_date",
             "book",
             "user",
-        )
-
-
-class BorrowingReturnSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Borrowing
-        fields = (
-            "id",
-            "actual_return_date",
         )

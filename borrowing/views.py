@@ -133,6 +133,7 @@ class BorrowingView(
         detail=True,
         methods=["post"],
         permission_classes=[IsAdminOrIfAuthenticatedReadOnly],
+        url_path="return",
     )
     def return_book(self, request, pk=None):
         borrowing = self.get_object()
@@ -151,6 +152,8 @@ class BorrowingView(
                 session_id, session_url, money_to_pay = create_stripe_payment_session(
                     request, borrowing, FINE_MULTIPLIER
                 )
+            else:
+                session_id = None
             if session_id:
                 payment = Payment.objects.create(
                     status="PENDING",
