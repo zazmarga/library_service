@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from django.db import transaction
@@ -5,6 +6,7 @@ from rest_framework import mixins, viewsets, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
 from borrowing.permissions import IsAdminOrIfAuthenticatedReadOnly
 from borrowing.serializers import (
@@ -12,6 +14,13 @@ from borrowing.serializers import (
     BorrowingCreateSerializer,
     BorrowingReturnSerializer,
 )
+from borrowing.serializers import (
+    BorrowingSerializer,
+    BorrowingCreateSerializer,
+    BorrowingRetrieveSerializer,
+)
+from payments.models import Payment
+from payments.stripe_helper import create_stripe_payment_session
 
 
 class BorrowingView(
@@ -20,7 +29,9 @@ class BorrowingView(
     mixins.CreateModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Borrowing.objects.select_related("book", "user")
+    queryset = Borrowing.objects.select_related("book", "user").prefetch_related(
+        "payments"
+    )
     serializer_class = BorrowingSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
@@ -41,8 +52,8 @@ class BorrowingView(
         return queryset
 
     def get_serializer_class(self):
-        if self.action in ["retrieve", "list"]:
-            return BorrowingSerializer
+        if self.action in ["retrieve"]:
+            return BorrowingRetrieveSerializer
         if self.action == "create":
             return BorrowingCreateSerializer
         if self.action == "return_book":
@@ -79,6 +90,33 @@ class BorrowingView(
                 expected_return_date=expected_return_date,
                 book=book,
                 user=user,
+            )
+
+            session_id, session_url, money_to_pay = create_stripe_payment_session(
+                request,
+                borrowing,
+            )
+
+            formatted_date = datetime.today().strftime("%d-%m-%Y  %H:%M")
+            expected_return_date = expected_return_date.strftime("%d-%m-%Y")
+            message = (
+                f"{formatted_date} NEW borrowing \n"
+                "----------------------------------------\n"
+                f"BOOK: ** {borrowing.book.title} **  \n"
+                f"has been borrowed by {borrowing.user.email}\n"
+                f"expected return date: {expected_return_date}.\n"
+                f"now in stock: ** {book.inventory} **\n"
+            )
+            asyncio.run(send_message(ADMIN_CHAT_ID, message))
+
+        if session_id:
+            payment = Payment.objects.create(
+                status="PENDING",
+                type_pay="PAYMENT",
+                borrowing=borrowing,
+                session_id=session_id,
+                session_url=session_url,
+                money_to_pay=money_to_pay,
             )
 
         serializer = self.get_serializer(borrowing)
