@@ -19,12 +19,16 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.contrib import admin
 from django.urls import path, include
 
+from payments.views import payment_success, payment_cancel
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/books/", include("books.urls"), name="books"),
     path("api/users/", include("user.urls", namespace="user")),
     path("api/borrowings/", include("borrowing.urls", namespace="borrowings")),
     path("api/payments/", include("payments.urls", namespace="payments")),
+    path("success/", payment_success, name="payment_success"),
+    path("cancel/", payment_cancel, name="payment_cancel"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/doc/swagger/",

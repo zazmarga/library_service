@@ -8,6 +8,7 @@ from borrowing.models import Borrowing
 
 class BorrowingSerializer(serializers.ModelSerializer):
     book = BookSerializer(read_only=True)
+    payments = serializers.SerializerMethodField()
 
     class Meta:
         model = Borrowing
@@ -18,7 +19,39 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "actual_return_date",
             "book",
             "user",
+            "payments",
         )
+
+    def get_payments(self, obj):
+        from payments.serializers import PaymentInBorrowingListSerializer
+        from payments.models import Payment
+
+        payments = Payment.objects.filter(borrowing=obj)
+        return PaymentInBorrowingListSerializer(payments, many=True).data
+
+
+class BorrowingRetrieveSerializer(serializers.ModelSerializer):
+    book = BookSerializer(read_only=True)
+    payments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Borrowing
+        fields = (
+            "id",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "book",
+            "user",
+            "payments",
+        )
+
+    def get_payments(self, obj):
+        from payments.serializers import PaymentInBorrowingRetrieveSerializer
+        from payments.models import Payment
+
+        payments = Payment.objects.filter(borrowing=obj)
+        return PaymentInBorrowingRetrieveSerializer(payments, many=True).data
 
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
@@ -32,6 +65,21 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             "user",
             "expected_return_date",
             "book",
+        )
+
+
+class BorrowingInPaymentRetrieveSerializer(serializers.ModelSerializer):
+    book = BookSerializer(read_only=True)
+
+    class Meta:
+        model = Borrowing
+        fields = (
+            "id",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "book",
+            "user",
         )
 
 

@@ -1,3 +1,5 @@
+from django.shortcuts import render
+from django.http import HttpResponse
 from rest_framework import mixins, viewsets
 
 from payments.models import Payment
@@ -29,3 +31,16 @@ class PaymentView(
             return queryset
         if user.is_authenticated and not user.is_staff:
             return self.queryset.filter(borrowing__user=user)
+
+
+def payment_success(request):
+    session_id = request.GET.get("session_id")
+    if session_id:
+        payment = Payment.objects.get(session_id=session_id)
+        payment.status = "PAID"
+        payment.save()
+        return render(request, "success.html")
+    return HttpResponse("Payment session not found.")
+
+def payment_cancel(request):
+    return render(request, "cancel.html")
