@@ -178,7 +178,7 @@ class AdminBorrowingApiTest(TestCase):
         }
         response = self.client.post(BORROWING_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
+        print(response.data)
         new_borrowing = Borrowing.objects.get(pk=response.data["id"])
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -193,3 +193,16 @@ class AdminBorrowingApiTest(TestCase):
         url = BORROWING_URL + f"{borrowing.id}/"
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_return_book_inventory(self):
+        prev_inventory_book = self.book.inventory
+        payload = {
+            "actual_return_date": datetime.today() + timedelta(days=1),
+        }
+        url = f"{BORROWING_URL}{self.borrowing.id}/return/"
+        response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.book.refresh_from_db()
+        new_inventory_book = self.book.inventory
+        self.assertLess(prev_inventory_book, new_inventory_book)

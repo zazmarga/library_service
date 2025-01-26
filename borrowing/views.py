@@ -2,11 +2,16 @@ from datetime import datetime
 
 from django.db import transaction
 from rest_framework import mixins, viewsets, serializers, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from borrowing.models import Borrowing
 from borrowing.permissions import IsAdminOrIfAuthenticatedReadOnly
-from borrowing.serializers import BorrowingSerializer, BorrowingCreateSerializer
+from borrowing.serializers import (
+    BorrowingSerializer,
+    BorrowingCreateSerializer,
+    BorrowingReturnSerializer,
+)
 
 
 class BorrowingView(
@@ -40,6 +45,8 @@ class BorrowingView(
             return BorrowingSerializer
         if self.action == "create":
             return BorrowingCreateSerializer
+        if self.action == "return_book":
+            return BorrowingReturnSerializer
         return BorrowingSerializer
 
     def create(self, request, *args, **kwargs):
@@ -80,3 +87,23 @@ class BorrowingView(
             serializer.data,
             status=status.HTTP_201_CREATED,
         )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[IsAdminOrIfAuthenticatedReadOnly],
+    )
+    def return_book(self, request, pk=None):
+        borrowing = self.get_object()
+        if borrowing.actual_return_date is not None:
+            raise serializers.ValidationError(
+                f"This book already has returned at {borrowing.actual_return_date}."
+            )
+        with transaction.atomic():
+            borrowing.actual_return_date = datetime.today().date()
+            borrowing.save()
+            book = borrowing.book
+            book.inventory += 1
+            book.save()
+
+        return Response(status=status.HTTP_200_OK)
