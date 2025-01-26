@@ -2,16 +2,13 @@ import asyncio
 from datetime import datetime
 
 from django.db import transaction
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, viewsets, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
-from borrowing.permissions import IsAdminOrIfAuthenticatedReadOnly
-from borrowing.serializers import (
-    BorrowingReturnSerializer,
-)
 from borrowing.serializers import (
     BorrowingSerializer,
     BorrowingCreateSerializer,
@@ -165,3 +162,23 @@ class BorrowingView(
                 )
 
         return Response(status=status.HTTP_200_OK)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "user_id",
+                type={"type": "int"},
+                description="Filter borrowings by user id (ex. /?user_id=1)",
+            ),
+            OpenApiParameter(
+                "is_active",
+                type={"type": "bool"},
+                description="Filter by active borrowings (not returned) (ex. /?is_active=true)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        Get list of borrowings
+        """
+        return super().list(request, *args, **kwargs)
