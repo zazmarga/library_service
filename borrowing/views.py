@@ -8,6 +8,10 @@ from rest_framework.response import Response
 
 from borrowing.bot_helper import send_message, ADMIN_CHAT_ID
 from borrowing.models import Borrowing
+from borrowing.permissions import IsAdminOrIfAuthenticatedReadOnly
+from borrowing.serializers import (
+    BorrowingReturnSerializer,
+)
 from borrowing.serializers import (
     BorrowingSerializer,
     BorrowingCreateSerializer,
@@ -17,6 +21,9 @@ from borrowing.serializers import (
 from payments.models import Payment
 from payments.stripe_helper import create_stripe_payment_session
 from borrowing.permissions import IsAdminOrIfAuthenticatedReadOnly
+
+
+FINE_MULTIPLIER = 2
 
 
 class BorrowingView(
@@ -139,5 +146,19 @@ class BorrowingView(
             book = borrowing.book
             book.inventory += 1
             book.save()
+
+            if borrowing.actual_return_date > borrowing.expected_return_date:
+                session_id, session_url, money_to_pay = create_stripe_payment_session(
+                    request, borrowing, FINE_MULTIPLIER
+                )
+            if session_id:
+                payment = Payment.objects.create(
+                    status="PENDING",
+                    type_pay="FINE",
+                    borrowing=borrowing,
+                    session_id=session_id,
+                    session_url=session_url,
+                    money_to_pay=money_to_pay,
+                )
 
         return Response(status=status.HTTP_200_OK)

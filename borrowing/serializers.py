@@ -68,6 +68,16 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         )
 
 
+class BorrowingReturnSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Borrowing
+        fields = (
+            "id",
+            "actual_return_date",
+        )
+
+
 class BorrowingInPaymentRetrieveSerializer(serializers.ModelSerializer):
     book = BookSerializer(read_only=True)
 
