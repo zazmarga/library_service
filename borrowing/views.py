@@ -67,7 +67,8 @@ class BorrowingView(
             )
 
             session_id, session_url, money_to_pay = create_stripe_payment_session(
-                borrowing
+                request,
+                borrowing,
             )
 
             formatted_date = datetime.today().strftime("%d-%m-%Y  %H:%M")
