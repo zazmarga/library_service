@@ -7,12 +7,20 @@ from library_service import settings
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_stripe_payment_session(request, borrowing):
+def create_stripe_payment_session(request, borrowing, fine_multiplier: int = None):
     success_url = request.build_absolute_uri(reverse("payment_success"))
     cancel_url = request.build_absolute_uri(reverse("payment_cancel"))
 
-    using_days = (borrowing.expected_return_date - borrowing.borrow_date).days
-    money_to_pay = int(borrowing.book.daily_fee * using_days * 100)
+    if fine_multiplier:
+        overdue_days = (
+            borrowing.actual_return_date - borrowing.expected_return_date
+        ).days
+        money_to_pay = int(
+            borrowing.book.daily_fee * fine_multiplier * overdue_days * 100
+        )
+    else:
+        using_days = (borrowing.expected_return_date - borrowing.borrow_date).days
+        money_to_pay = int(borrowing.book.daily_fee * using_days * 100)
 
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
