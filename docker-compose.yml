@@ -1,0 +1,42 @@
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+          python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+
+  redis:
+    image: "redis:alpine"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py wait_for_db &&
+          celery -A library_service worker -l INFO --pool=solo"
+    depends_on:
+      - web
+      - redis
+    restart: on-failure
+    env_file:
+      - .env
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "celery -A library_service beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      - web
+      - redis
+    restart: on-failure
+    env_file:
+      - .env
