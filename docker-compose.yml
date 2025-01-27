@@ -18,7 +18,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: "celery -A library_service worker -l INFO --pool=solo"
+    command: >
+      sh -c "python manage.py wait_for_db &&
+          celery -A library_service worker -l INFO --pool=solo"
     depends_on:
       - web
       - redis
